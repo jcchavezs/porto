@@ -221,7 +221,7 @@ Options:
 
 Examples:
 
-Adds import path to a folder
+Add import path to a folder
     $ porto -w myproject
 		`)
 		os.Exit(0)
