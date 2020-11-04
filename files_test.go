@@ -1,4 +1,4 @@
-package main
+package porto
 
 import (
 	"testing"
@@ -6,12 +6,12 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-func TestFindGoMod(t *testing.T) {
-	module, found := findGoMod("../../testdata/withgomod")
+func TestFindGoModule(t *testing.T) {
+	module, found := findGoModule("./testdata/withgomod")
 	assert.True(t, found)
 	assert.Equal(t, "github.com/jcchavezs/porto/testmodule", module)
 
-	_, found = findGoMod("../../testdata/withoutgomod")
+	_, found = findGoModule("./testdata/withoutgomod")
 	assert.False(t, found)
 }
 
