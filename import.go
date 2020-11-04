@@ -31,7 +31,7 @@ func addImportPath(absFilepath string, module string, genPrefixes []string) ([]b
 		return nil, fmt.Errorf("failed to parse the file %q: %v", absFilepath, err)
 	}
 
-	// 9 = len("package ") + 1 because that is the first character of the package
+	// 9 = len("package ") + 1 because that is the first character of the package name
 	startPackageLinePos := int(pf.Name.NamePos) - 9
 
 	headerComments := string(content[0:startPackageLinePos])
@@ -143,12 +143,15 @@ func findAndAddVanityImportForNonModuleDir(absDir string, opts Options) error {
 	return nil
 }
 
+// Options represents the options for adding vanity import.
 type Options struct {
 	// writes result to file directly
 	WriteResultToFile bool
 	GeneratedPrefixes []string
 }
 
+// FindAndAddVanityImportForDir scans all files in a folder and based on go.mod files
+// encountered decides wether add a vanity import or not.
 func FindAndAddVanityImportForDir(absDir string, opts Options) error {
 	if moduleName, ok := findGoModule(absDir); ok {
 		return findAndAddVanityImportForModuleDir(absDir, moduleName, opts)

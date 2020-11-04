@@ -1,6 +1,8 @@
 # Porto
 
-Tool for adding vanity import to Go files.
+Tool for adding [vanity imports](https://sagikazarmark.hu/blog/vanity-import-paths-in-go/) URI to Go files.
+
+e.g. `package zipkin` -> `package zipkin // import "github.com/openzipkin/zipkin-go"`
 
 ## Install
 
@@ -16,7 +18,7 @@ Run the tool and display the changes without applying them
 porto path/to/library
 ```
 
-If you want the changes to be applied to the files, run:
+If you want the changes to be applied to the files directly, run:
 
 ```bash
 porto -w path/to/library
