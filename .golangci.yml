@@ -6,7 +6,7 @@ linters:
   enable:
     - dupl
     - goconst
-    #- gocyclo response wrapper for server handler is too complex
+    - gocyclo
     - gofmt
     - golint
     - govet
