@@ -23,3 +23,9 @@ If you want the changes to be applied to the files directly, run:
 ```bash
 porto -w path/to/library
 ```
+
+If you just want to list the files that porto would change vanity import, run:
+
+```bash
+porto -l path/to/library
+```
