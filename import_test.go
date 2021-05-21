@@ -31,3 +31,18 @@ func TestAddImportPathFixesTheVanityImport(t *testing.T) {
 	assert.True(t, hasChanged)
 	assert.Equal(t, "package rightpad // import \"mypackage\"", string(newContent[:38]))
 }
+
+func TestIsToolsFile(t *testing.T) {
+	isTools := isToolsFile([]byte(`
+	// +build tools
+	package mypackage
+	`))
+	assert.True(t, isTools)
+
+	isTools = isToolsFile([]byte(`
+	// +build linux,386 darwin,!cgo
+
+	package mypackage
+	`))
+	assert.False(t, isTools)
+}

@@ -16,6 +16,11 @@ var (
 	errMainPackage   = errors.New("failed to add import to a main package")
 )
 
+// isToolsFile returns true if the fileHeader contains the standard tools build tag.
+func isToolsFile(fileHeaderContent []byte) bool {
+	return strings.Contains(string(fileHeaderContent), "// +build tools")
+}
+
 // addImportPath adds the vanity import path to a given go file.
 func addImportPath(absFilepath string, module string, genPrefixes []string) (bool, []byte, error) {
 	fset := token.NewFileSet()
@@ -36,7 +41,11 @@ func addImportPath(absFilepath string, module string, genPrefixes []string) (boo
 	// 9 = len("package ") + 1 because that is the first character of the package name
 	startPackageLinePos := int(pf.Name.NamePos) - 9
 
-	headerComments := string(content[0:startPackageLinePos])
+	if isToolsFile(content[:startPackageLinePos]) {
+		return false, nil, nil
+	}
+
+	headerComments := string(content[:startPackageLinePos])
 	for _, genPrefix := range genPrefixes {
 		if strings.Contains(headerComments, "// "+genPrefix) {
 			return false, nil, errGeneratedCode
