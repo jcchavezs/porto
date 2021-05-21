@@ -1,11 +1,13 @@
 package porto
 
 import (
+	"bytes"
 	"errors"
 	"fmt"
 	"go/parser"
 	"go/token"
 	"io/ioutil"
+	"path/filepath"
 	"strings"
 )
 
@@ -15,20 +17,20 @@ var (
 )
 
 // addImportPath adds the vanity import path to a given go file.
-func addImportPath(absFilepath string, module string, genPrefixes []string) ([]byte, error) {
+func addImportPath(absFilepath string, module string, genPrefixes []string) (bool, []byte, error) {
 	fset := token.NewFileSet()
 	pf, err := parser.ParseFile(fset, absFilepath, nil, 0)
 	if err != nil {
-		return nil, fmt.Errorf("failed to parse the file %q: %v", absFilepath, err)
+		return false, nil, fmt.Errorf("failed to parse the file %q: %v", absFilepath, err)
 	}
 	packageName := pf.Name.String()
 	if packageName == "main" { // you can't import a main package
-		return nil, errMainPackage
+		return false, nil, errMainPackage
 	}
 
 	content, err := ioutil.ReadFile(absFilepath)
 	if err != nil {
-		return nil, fmt.Errorf("failed to parse the file %q: %v", absFilepath, err)
+		return false, nil, fmt.Errorf("failed to parse the file %q: %v", absFilepath, err)
 	}
 
 	// 9 = len("package ") + 1 because that is the first character of the package name
@@ -37,7 +39,7 @@ func addImportPath(absFilepath string, module string, genPrefixes []string) ([]b
 	headerComments := string(content[0:startPackageLinePos])
 	for _, genPrefix := range genPrefixes {
 		if strings.Contains(headerComments, "// "+genPrefix) {
-			return nil, errGeneratedCode
+			return false, nil, errGeneratedCode
 		}
 	}
 
@@ -63,10 +65,10 @@ func addImportPath(absFilepath string, module string, genPrefixes []string) ([]b
 	newContent = append(newContent, importComment...)
 	newContent = append(newContent, content[endPackageLinePos:]...)
 
-	return newContent, nil
+	return bytes.Compare(content, newContent) != 0, newContent, nil
 }
 
-func findAndAddVanityImportForModuleDir(absDir string, moduleName string, opts Options) error {
+func findAndAddVanityImportForModuleDir(workingDir, absDir string, moduleName string, opts Options) error {
 	files, err := ioutil.ReadDir(absDir)
 	if err != nil {
 		return fmt.Errorf("failed to read the content of %q: %v", absDir, err)
@@ -78,19 +80,23 @@ func findAndAddVanityImportForModuleDir(absDir string, moduleName string, opts O
 				continue
 			} else if newModuleName, ok := findGoModule(absDir + pathSeparator + dirName); ok {
 				// if folder contains go.mod we use it from now on to build the vanity import
-				if err := findAndAddVanityImportForModuleDir(absDir+pathSeparator+dirName, newModuleName, opts); err != nil {
+				if err := findAndAddVanityImportForModuleDir(workingDir, absDir+pathSeparator+dirName, newModuleName, opts); err != nil {
 					return err
 				}
 			} else {
 				// if not, we add the folder name to the vanity import
-				if err := findAndAddVanityImportForModuleDir(absDir+pathSeparator+dirName, moduleName+"/"+dirName, opts); err != nil {
+				if err := findAndAddVanityImportForModuleDir(workingDir, absDir+pathSeparator+dirName, moduleName+"/"+dirName, opts); err != nil {
 					return err
 				}
 			}
 		} else if fileName := f.Name(); isGoFile(fileName) && !isGoTestFile(fileName) {
 			absFilepath := absDir + pathSeparator + fileName
 
-			newContent, err := addImportPath(absDir+pathSeparator+fileName, moduleName, opts.GeneratedPrefixes)
+			hasChanged, newContent, err := addImportPath(absDir+pathSeparator+fileName, moduleName, opts.GeneratedPrefixes)
+			if !hasChanged {
+				continue
+			}
+
 			switch err {
 			case nil:
 				if opts.WriteResultToFile {
@@ -98,14 +104,24 @@ func findAndAddVanityImportForModuleDir(absDir string, moduleName string, opts O
 					if err != nil {
 						return fmt.Errorf("failed to write file: %v", err)
 					}
+				} else if opts.ListDiffFiles {
+					relFilepath, err := filepath.Rel(workingDir, absFilepath)
+					if err != nil {
+						return fmt.Errorf("failed to resolve relative path: %v", err)
+					}
+					fmt.Println(relFilepath)
 				} else {
-					fmt.Printf("👉 %s\n\n", absFilepath)
+					relFilepath, err := filepath.Rel(workingDir, absFilepath)
+					if err != nil {
+						return fmt.Errorf("failed to resolve relative path: %v", err)
+					}
+					fmt.Printf("👉 %s\n\n", relFilepath)
 					fmt.Println(string(newContent))
 				}
 			case errGeneratedCode, errMainPackage:
 				continue
 			default:
-				return fmt.Errorf("failed to add vanity import path to %q: %v\n", absDir+pathSeparator+fileName, err)
+				return fmt.Errorf("failed to add vanity import path to %q: %v", absDir+pathSeparator+fileName, err)
 			}
 		}
 	}
@@ -113,7 +129,7 @@ func findAndAddVanityImportForModuleDir(absDir string, moduleName string, opts O
 	return nil
 }
 
-func findAndAddVanityImportForNonModuleDir(absDir string, opts Options) error {
+func findAndAddVanityImportForNonModuleDir(workingDir, absDir string, opts Options) error {
 	files, err := ioutil.ReadDir(absDir)
 	if err != nil {
 		return fmt.Errorf("failed to read %q: %v", absDir, err)
@@ -131,11 +147,11 @@ func findAndAddVanityImportForNonModuleDir(absDir string, opts Options) error {
 
 		absDirName := absDir + pathSeparator + dirName
 		if moduleName, ok := findGoModule(absDirName); ok {
-			if err := findAndAddVanityImportForModuleDir(dirName, moduleName, opts); err != nil {
+			if err := findAndAddVanityImportForModuleDir(workingDir, dirName, moduleName, opts); err != nil {
 				return err
 			}
 		} else {
-			if err := findAndAddVanityImportForNonModuleDir(absDirName, opts); err != nil {
+			if err := findAndAddVanityImportForNonModuleDir(workingDir, absDirName, opts); err != nil {
 				return err
 			}
 		}
@@ -147,14 +163,15 @@ func findAndAddVanityImportForNonModuleDir(absDir string, opts Options) error {
 type Options struct {
 	// writes result to file directly
 	WriteResultToFile bool
+	ListDiffFiles     bool
 	GeneratedPrefixes []string
 }
 
 // FindAndAddVanityImportForDir scans all files in a folder and based on go.mod files
 // encountered decides wether add a vanity import or not.
-func FindAndAddVanityImportForDir(absDir string, opts Options) error {
+func FindAndAddVanityImportForDir(workingDir, absDir string, opts Options) error {
 	if moduleName, ok := findGoModule(absDir); ok {
-		return findAndAddVanityImportForModuleDir(absDir, moduleName, opts)
+		return findAndAddVanityImportForModuleDir(workingDir, absDir, moduleName, opts)
 	}
 
 	files, err := ioutil.ReadDir(absDir)
@@ -176,11 +193,11 @@ func FindAndAddVanityImportForDir(absDir string, opts Options) error {
 
 		absDirName := absDir + pathSeparator + dirName
 		if moduleName, ok := findGoModule(absDirName); ok {
-			if err := findAndAddVanityImportForModuleDir(dirName, moduleName, opts); err != nil {
+			if err := findAndAddVanityImportForModuleDir(workingDir, dirName, moduleName, opts); err != nil {
 				return err
 			}
 		} else {
-			if err := findAndAddVanityImportForNonModuleDir(absDirName, opts); err != nil {
+			if err := findAndAddVanityImportForNonModuleDir(workingDir, absDirName, opts); err != nil {
 				return err
 			}
 		}
