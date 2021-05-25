@@ -6,6 +6,8 @@ import (
 	"log"
 	"os"
 	"path/filepath"
+	"regexp"
+	"strings"
 
 	"github.com/jcchavezs/porto"
 )
@@ -13,6 +15,7 @@ import (
 func main() {
 	flagWrite := flag.Bool("w", false, "write result to (source) file instead of stdout")
 	flagList := flag.Bool("l", false, "list files whose vanity import differs from porto's")
+	flagSkipFiles := flag.String("skip-files", "", "Regexps of files to skip")
 	flag.Parse()
 
 	baseDir := flag.Arg(0)
@@ -21,8 +24,9 @@ func main() {
 usage: porto [options] path
 
 Options:
--w            write result to (source) file instead of stdout (default: false)
--l            list files whose vanity import differs from porto's (default: false)
+-w             Write result to (source) file instead of stdout (default: false)
+-l             List files whose vanity import differs from porto's (default: false)
+--skip-files   Regexps of files to skip
 
 Examples:
 
@@ -42,10 +46,21 @@ Add import path to a folder
 		log.Fatalf("failed to resolve base absolute path for %q: %v", baseDir, err)
 	}
 
+	var skipFilesRegex []*regexp.Regexp
+	if len(*flagSkipFiles) > 0 {
+		for _, sfrp := range strings.Split(*flagSkipFiles, ",") {
+			sfr, err := regexp.Compile(sfrp)
+			if err != nil {
+				log.Fatalf("failed to resolve base absolute path for %q: %v", baseDir, err)
+			}
+			skipFilesRegex = append(skipFilesRegex, sfr)
+		}
+	}
+
 	err = porto.FindAndAddVanityImportForDir(workingDir, baseAbsDir, porto.Options{
 		WriteResultToFile: *flagWrite,
 		ListDiffFiles:     *flagList,
-		GeneratedPrefixes: []string{"Code generated"},
+		SkipFilesRegexes:  skipFilesRegex,
 	})
 	if err != nil {
 		log.Fatal(err)

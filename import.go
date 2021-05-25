@@ -8,16 +8,15 @@ import (
 	"go/token"
 	"io/ioutil"
 	"path/filepath"
-	"strings"
+	"regexp"
 )
 
 var (
-	errGeneratedCode = errors.New("failed to add import to a generated code")
-	errMainPackage   = errors.New("failed to add import to a main package")
+	errMainPackage = errors.New("failed to add import to a main package")
 )
 
 // addImportPath adds the vanity import path to a given go file.
-func addImportPath(absFilepath string, module string, genPrefixes []string) (bool, []byte, error) {
+func addImportPath(absFilepath string, module string) (bool, []byte, error) {
 	fset := token.NewFileSet()
 	pf, err := parser.ParseFile(fset, absFilepath, nil, 0)
 	if err != nil {
@@ -35,13 +34,6 @@ func addImportPath(absFilepath string, module string, genPrefixes []string) (boo
 
 	// 9 = len("package ") + 1 because that is the first character of the package name
 	startPackageLinePos := int(pf.Name.NamePos) - 9
-
-	headerComments := string(content[0:startPackageLinePos])
-	for _, genPrefix := range genPrefixes {
-		if strings.Contains(headerComments, "// "+genPrefix) {
-			return false, nil, errGeneratedCode
-		}
-	}
 
 	// first 1 = len(" ") as in "package " and the other 1 is for newline
 	endPackageLinePos := pf.Name.NamePos
@@ -89,10 +81,10 @@ func findAndAddVanityImportForModuleDir(workingDir, absDir string, moduleName st
 					return err
 				}
 			}
-		} else if fileName := f.Name(); isGoFile(fileName) && !isGoTestFile(fileName) {
+		} else if fileName := f.Name(); isGoFile(fileName) && !isGoTestFile(fileName) && !isIgnoredFile(opts.SkipFilesRegexes, fileName) {
 			absFilepath := absDir + pathSeparator + fileName
 
-			hasChanged, newContent, err := addImportPath(absDir+pathSeparator+fileName, moduleName, opts.GeneratedPrefixes)
+			hasChanged, newContent, err := addImportPath(absDir+pathSeparator+fileName, moduleName)
 			if !hasChanged {
 				continue
 			}
@@ -118,7 +110,7 @@ func findAndAddVanityImportForModuleDir(workingDir, absDir string, moduleName st
 					fmt.Printf("👉 %s\n\n", relFilepath)
 					fmt.Println(string(newContent))
 				}
-			case errGeneratedCode, errMainPackage:
+			case errMainPackage:
 				continue
 			default:
 				return fmt.Errorf("failed to add vanity import path to %q: %v", absDir+pathSeparator+fileName, err)
@@ -127,6 +119,16 @@ func findAndAddVanityImportForModuleDir(workingDir, absDir string, moduleName st
 	}
 
 	return nil
+}
+
+func isIgnoredFile(fileRegexes []*regexp.Regexp, filename string) bool {
+	for _, fr := range fileRegexes {
+		if matched := fr.MatchString(filename); matched {
+			return true
+		}
+	}
+
+	return false
 }
 
 func findAndAddVanityImportForNonModuleDir(workingDir, absDir string, opts Options) error {
@@ -163,8 +165,10 @@ func findAndAddVanityImportForNonModuleDir(workingDir, absDir string, opts Optio
 type Options struct {
 	// writes result to file directly
 	WriteResultToFile bool
-	ListDiffFiles     bool
-	GeneratedPrefixes []string
+	// List files to be changed
+	ListDiffFiles bool
+	// Set of regex for matching files to be skipped
+	SkipFilesRegexes []*regexp.Regexp
 }
 
 // FindAndAddVanityImportForDir scans all files in a folder and based on go.mod files
