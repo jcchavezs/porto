@@ -29,3 +29,9 @@ If you just want to list the files that porto would change vanity import, run:
 ```bash
 porto -l path/to/library
 ```
+
+If you want to ignore files (e.g. proto generated files), pass the `--skip-files` flag:
+
+```bash
+porto --skip-files ".*\\.pb\\.go$" path/to/library
+```
