@@ -57,12 +57,16 @@ Add import path to a folder
 		}
 	}
 
-	err = porto.FindAndAddVanityImportForDir(workingDir, baseAbsDir, porto.Options{
+	c, err := porto.FindAndAddVanityImportForDir(workingDir, baseAbsDir, porto.Options{
 		WriteResultToFile: *flagWrite,
 		ListDiffFiles:     *flagList,
 		SkipFilesRegexes:  skipFilesRegex,
 	})
 	if err != nil {
 		log.Fatal(err)
+	}
+
+	if *flagList && c > 0 {
+		os.Exit(2)
 	}
 }
