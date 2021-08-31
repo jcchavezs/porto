@@ -107,7 +107,7 @@ func findAndAddVanityImportForModuleDir(workingDir, absDir string, moduleName st
 					if err != nil {
 						return 0, fmt.Errorf("failed to resolve relative path: %v", err)
 					}
-					fmt.Println(relFilepath)
+					fmt.Printf("%s: missing right vanity import\n", relFilepath)
 					gc++
 				} else {
 					relFilepath, err := filepath.Rel(workingDir, absFilepath)
