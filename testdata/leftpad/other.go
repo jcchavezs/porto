@@ -1,3 +1,3 @@
-// another coment!
+// another comment!
 
 package leftpad
