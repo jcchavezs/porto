@@ -17,7 +17,7 @@ func TestAddImportPathAddsVanityImport(t *testing.T) {
 
 	require.NoError(t, err)
 	assert.True(t, hasChanged)
-	assert.Equal(t, "package leftpad // import \"mypackage\"", string(newContent[14:51]))
+	assert.Equal(t, "package leftpad // import \"mypackage\"", string(newContent[15:52]))
 }
 
 func TestAddImportPathFixesTheVanityImport(t *testing.T) {
