@@ -69,23 +69,26 @@ func findAndAddVanityImportForModuleDir(workingDir, absDir string, moduleName st
 	gc := 0
 	for _, f := range files {
 		if isDir, dirName := f.IsDir(), f.Name(); isDir {
+			var (
+				c   int
+				err error
+			)
 			if isUnexportedDir(dirName) {
 				continue
 			} else if newModuleName, ok := findGoModule(absDir + pathSeparator + dirName); ok {
 				// if folder contains go.mod we use it from now on to build the vanity import
-				if c, err := findAndAddVanityImportForModuleDir(workingDir, absDir+pathSeparator+dirName, newModuleName, opts); err != nil {
+				c, err = findAndAddVanityImportForModuleDir(workingDir, absDir+pathSeparator+dirName, newModuleName, opts)
+				if err != nil {
 					return 0, err
-				} else {
-					gc += c
 				}
 			} else {
 				// if not, we add the folder name to the vanity import
-				if c, err := findAndAddVanityImportForModuleDir(workingDir, absDir+pathSeparator+dirName, moduleName+"/"+dirName, opts); err != nil {
+				if c, err = findAndAddVanityImportForModuleDir(workingDir, absDir+pathSeparator+dirName, moduleName+"/"+dirName, opts); err != nil {
 					return 0, err
-				} else {
-					gc += c
 				}
 			}
+
+			gc += c
 		} else if fileName := f.Name(); isGoFile(fileName) && !isGoTestFile(fileName) && !isIgnoredFile(opts.SkipFilesRegexes, fileName) {
 			absFilepath := absDir + pathSeparator + fileName
 
@@ -156,20 +159,23 @@ func findAndAddVanityImportForNonModuleDir(workingDir, absDir string, opts Optio
 			continue
 		}
 
+		var (
+			c   int
+			err error
+		)
+
 		absDirName := absDir + pathSeparator + dirName
 		if moduleName, ok := findGoModule(absDirName); ok {
-			if c, err := findAndAddVanityImportForModuleDir(workingDir, dirName, moduleName, opts); err != nil {
+			if c, err = findAndAddVanityImportForModuleDir(workingDir, dirName, moduleName, opts); err != nil {
 				return 0, err
-			} else {
-				gc += c
 			}
 		} else {
-			if c, err := findAndAddVanityImportForNonModuleDir(workingDir, absDirName, opts); err != nil {
+			if c, err = findAndAddVanityImportForNonModuleDir(workingDir, absDirName, opts); err != nil {
 				return 0, err
-			} else {
-				gc += c
 			}
 		}
+
+		gc += c
 	}
 
 	return gc, nil
@@ -210,20 +216,22 @@ func FindAndAddVanityImportForDir(workingDir, absDir string, opts Options) (int,
 			continue
 		}
 
+		var (
+			c   int
+			err error
+		)
 		absDirName := absDir + pathSeparator + dirName
 		if moduleName, ok := findGoModule(absDirName); ok {
-			if c, err := findAndAddVanityImportForModuleDir(workingDir, dirName, moduleName, opts); err != nil {
+			if c, err = findAndAddVanityImportForModuleDir(workingDir, dirName, moduleName, opts); err != nil {
 				return 0, err
-			} else {
-				gc += c
 			}
 		} else {
-			if c, err := findAndAddVanityImportForNonModuleDir(workingDir, absDirName, opts); err != nil {
+			if c, err = findAndAddVanityImportForNonModuleDir(workingDir, absDirName, opts); err != nil {
 				return 0, err
-			} else {
-				gc += c
 			}
 		}
+
+		gc += c
 	}
 
 	return gc, nil
