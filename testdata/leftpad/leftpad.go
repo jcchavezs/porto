@@ -1,4 +1,4 @@
-// a coment!
+// a comment!
 
 package leftpad
 

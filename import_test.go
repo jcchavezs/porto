@@ -17,7 +17,7 @@ func TestAddImportPathAddsVanityImport(t *testing.T) {
 
 	require.NoError(t, err)
 	assert.True(t, hasChanged)
-	assert.Equal(t, "package leftpad // import \"mypackage\"", string(newContent[14:51]))
+	assert.Equal(t, "package leftpad // import \"mypackage\"", string(newContent[15:52]))
 }
 
 func TestAddImportPathFixesTheVanityImport(t *testing.T) {
@@ -29,6 +29,39 @@ func TestAddImportPathFixesTheVanityImport(t *testing.T) {
 	require.NoError(t, err)
 	assert.True(t, hasChanged)
 	assert.Equal(t, "package rightpad // import \"mypackage\"", string(newContent[:38]))
+}
+
+func TestFindFilesWithVanityImport(t *testing.T) {
+	cwd, _ := os.Getwd()
+
+	t.Run("one file listed", func(t *testing.T) {
+		c, err := findAndAddVanityImportForModuleDir(
+			cwd,
+			cwd+"/testdata/leftpad",
+			"github.com/jcchavezs/porto-integration-leftpad",
+			Options{
+				ListDiffFiles: true,
+			},
+		)
+
+		require.NoError(t, err)
+		assert.Equal(t, 2, c)
+	})
+
+	t.Run("no files listed", func(t *testing.T) {
+		c, err := findAndAddVanityImportForModuleDir(
+			cwd,
+			cwd+"/testdata/nopad",
+			"github.com/jcchavezs/porto-integration/nopad",
+			Options{
+				ListDiffFiles: true,
+			},
+		)
+
+		require.NoError(t, err)
+		assert.Equal(t, 0, c)
+	})
+
 }
 
 func TestIsIgnoredFile(t *testing.T) {
