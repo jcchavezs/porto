@@ -61,13 +61,13 @@ func addImportPath(absFilepath string, module string) (bool, []byte, error) {
 	return !bytes.Equal(content, newContent), newContent, nil
 }
 
-func isUnexporterModule(moduleName string) bool {
+func isUnexportedModule(moduleName string) bool {
 	return strings.Contains(moduleName, "/internal/") ||
 		strings.HasSuffix(moduleName, "/internal")
 }
 
 func findAndAddVanityImportForModuleDir(workingDir, absDir string, moduleName string, opts Options) (int, error) {
-	if isUnexporterModule(moduleName) {
+	if isUnexportedModule(moduleName) {
 		return 0, nil
 	}
 
