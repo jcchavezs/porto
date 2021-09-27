@@ -8,7 +8,7 @@ linters:
     - goconst
     - gocyclo
     - gofmt
-    - golint
+    - revive
     - govet
     - ineffassign
     - lll
