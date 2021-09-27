@@ -81,3 +81,9 @@ func TestIsIgnoredFile(t *testing.T) {
 		),
 	)
 }
+
+func TestIsUnexporterModule(t *testing.T) {
+	assert.True(t, isUnexporterModule("go.opentelemetry.io/otel/internal"))
+	assert.True(t, isUnexporterModule("go.opentelemetry.io/otel/internal/metric"))
+	assert.False(t, isUnexporterModule("go.opentelemetry.io/otel/internalmetric"))
+}

@@ -9,6 +9,7 @@ import (
 	"io/ioutil"
 	"path/filepath"
 	"regexp"
+	"strings"
 )
 
 var (
@@ -60,7 +61,16 @@ func addImportPath(absFilepath string, module string) (bool, []byte, error) {
 	return !bytes.Equal(content, newContent), newContent, nil
 }
 
+func isUnexporterModule(moduleName string) bool {
+	return strings.Contains(moduleName, "/internal/") ||
+		strings.HasSuffix(moduleName, "/internal")
+}
+
 func findAndAddVanityImportForModuleDir(workingDir, absDir string, moduleName string, opts Options) (int, error) {
+	if isUnexporterModule(moduleName) {
+		return 0, nil
+	}
+
 	files, err := ioutil.ReadDir(absDir)
 	if err != nil {
 		return 0, fmt.Errorf("failed to read the content of %q: %v", absDir, err)
