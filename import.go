@@ -199,7 +199,7 @@ type Options struct {
 	ListDiffFiles bool
 	// Set of regex for matching files to be skipped
 	SkipFilesRegexes []*regexp.Regexp
-	// Check internal files
+	// Check internal packages
 	CheckInternal bool
 }
 
