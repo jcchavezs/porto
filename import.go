@@ -67,7 +67,7 @@ func isUnexportedModule(moduleName string) bool {
 }
 
 func findAndAddVanityImportForModuleDir(workingDir, absDir string, moduleName string, opts Options) (int, error) {
-	if isUnexportedModule(moduleName) {
+	if !opts.CheckInternal && isUnexportedModule(moduleName) {
 		return 0, nil
 	}
 
@@ -83,7 +83,7 @@ func findAndAddVanityImportForModuleDir(workingDir, absDir string, moduleName st
 				c   int
 				err error
 			)
-			if isUnexportedDir(dirName) {
+			if isUnexportedDir(dirName, opts.CheckInternal) {
 				continue
 			} else if newModuleName, ok := findGoModule(absDir + pathSeparator + dirName); ok {
 				// if folder contains go.mod we use it from now on to build the vanity import
@@ -165,7 +165,7 @@ func findAndAddVanityImportForNonModuleDir(workingDir, absDir string, opts Optio
 		}
 
 		dirName := f.Name()
-		if isUnexportedDir(dirName) {
+		if isUnexportedDir(dirName, opts.CheckInternal) {
 			continue
 		}
 
@@ -199,6 +199,8 @@ type Options struct {
 	ListDiffFiles bool
 	// Set of regex for matching files to be skipped
 	SkipFilesRegexes []*regexp.Regexp
+	// Check internal files
+	CheckInternal bool
 }
 
 // FindAndAddVanityImportForDir scans all files in a folder and based on go.mod files
@@ -222,7 +224,7 @@ func FindAndAddVanityImportForDir(workingDir, absDir string, opts Options) (int,
 		}
 
 		dirName := f.Name()
-		if isUnexportedDir(dirName) {
+		if isUnexportedDir(dirName, opts.CheckInternal) {
 			continue
 		}
 
