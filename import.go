@@ -21,9 +21,9 @@ var (
 	generatedRx = regexp.MustCompile(`// .*DO NOT EDIT\.?`)
 )
 
-// generated reports whether ast.File is a generated file.
+// isGeneratedFile reports whether ast.File is a generated file.
 // Taken from https://github.com/golang/tools/blob/c5188f24a/refactor/rename/spec.go#L578-L593
-func generated(pf *ast.File, tokenFile *token.File) bool {
+func isGeneratedFile(pf *ast.File, tokenFile *token.File) bool {
 	// Iterate over the comments in the file
 	for _, commentGroup := range pf.Comments {
 		for _, comment := range commentGroup.List {
@@ -52,7 +52,7 @@ func addImportPath(absFilepath string, module string) (bool, []byte, error) {
 
 	// Skip generated files.
 	tokenFile := fset.File(pf.Pos())
-	if generated(pf, tokenFile) {
+	if isGeneratedFile(pf, tokenFile) {
 		return false, nil, errGenerated
 	}
 
