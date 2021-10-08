@@ -16,6 +16,7 @@ func main() {
 	flagWriteOutputToFile := flag.Bool("w", false, "write result to (source) file instead of stdout")
 	flagListDiff := flag.Bool("l", false, "list files whose vanity import differs from porto's")
 	flagSkipFiles := flag.String("skip-files", "", "Regexps of files to skip")
+	flagIncludeInternal := flag.Bool("include-internal", false, "include internal folders")
 	flag.Parse()
 
 	baseDir := flag.Arg(0)
@@ -24,9 +25,10 @@ func main() {
 usage: porto [options] <target-path>
 
 Options:
--w             Write result to (source) file instead of stdout (default: false)
--l             List files whose vanity import differs from porto's (default: false)
---skip-files   Regexps of files to skip
+-w                  Write result to (source) file instead of stdout (default: false)
+-l                  List files whose vanity import differs from porto's (default: false)
+--skip-files        Regexps of files to skip
+--include-internal  Include internal folders
 
 Examples:
 
@@ -61,6 +63,7 @@ Add import path to a folder
 		WriteResultToFile: *flagWriteOutputToFile,
 		ListDiffFiles:     *flagListDiff,
 		SkipFilesRegexes:  skipFilesRegex,
+		IncludeInternal:   *flagIncludeInternal,
 	})
 	if err != nil {
 		log.Fatal(err)

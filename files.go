@@ -20,11 +20,10 @@ func isGoTestFile(filename string) bool {
 	return strings.HasSuffix(filename, "_test.go")
 }
 
-// isUnexportedDir checks if a dirname is a known unexported directory. Notice, we also
-// ignore "internal" because it is only exported inside the codebase. This situation can
-// become optional in the future.
-func isUnexportedDir(dirname string) bool {
-	return dirname == "testdata" || dirname == "internal"
+// isUnexportedDir checks if a dirname is a known unexported directory.
+// If includeInternal is false, we also ignore "internal".
+func isUnexportedDir(dirname string, includeInternal bool) bool {
+	return dirname == "testdata" || (!includeInternal && dirname == "internal")
 }
 
 // writeContentToFile writes the content in bytes to a given file.
