@@ -36,8 +36,8 @@ If you want to ignore files (e.g. proto generated files), pass the `--skip-files
 porto --skip-files ".*\\.pb\\.go$" path/to/library
 ```
 
-If you want to check `internal` folders too
+If you want to include `internal` folders too
 
 ```bash
-porto --check-internal path/to/library
+porto --include-internal path/to/library
 ```

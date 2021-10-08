@@ -61,13 +61,13 @@ func addImportPath(absFilepath string, module string) (bool, []byte, error) {
 	return !bytes.Equal(content, newContent), newContent, nil
 }
 
-func isUnexportedModule(moduleName string, checkInternal bool) bool {
-	return !checkInternal && (strings.Contains(moduleName, "/internal/") ||
+func isUnexportedModule(moduleName string, includeInternal bool) bool {
+	return !includeInternal && (strings.Contains(moduleName, "/internal/") ||
 		strings.HasSuffix(moduleName, "/internal"))
 }
 
 func findAndAddVanityImportForModuleDir(workingDir, absDir string, moduleName string, opts Options) (int, error) {
-	if isUnexportedModule(moduleName, opts.CheckInternal) {
+	if isUnexportedModule(moduleName, opts.IncludeInternal) {
 		return 0, nil
 	}
 
@@ -83,7 +83,7 @@ func findAndAddVanityImportForModuleDir(workingDir, absDir string, moduleName st
 				c   int
 				err error
 			)
-			if isUnexportedDir(dirName, opts.CheckInternal) {
+			if isUnexportedDir(dirName, opts.IncludeInternal) {
 				continue
 			} else if newModuleName, ok := findGoModule(absDir + pathSeparator + dirName); ok {
 				// if folder contains go.mod we use it from now on to build the vanity import
@@ -165,7 +165,7 @@ func findAndAddVanityImportForNonModuleDir(workingDir, absDir string, opts Optio
 		}
 
 		dirName := f.Name()
-		if isUnexportedDir(dirName, opts.CheckInternal) {
+		if isUnexportedDir(dirName, opts.IncludeInternal) {
 			continue
 		}
 
@@ -199,8 +199,8 @@ type Options struct {
 	ListDiffFiles bool
 	// Set of regex for matching files to be skipped
 	SkipFilesRegexes []*regexp.Regexp
-	// Check internal packages
-	CheckInternal bool
+	// Include internal packages
+	IncludeInternal bool
 }
 
 // FindAndAddVanityImportForDir scans all files in a folder and based on go.mod files
@@ -224,7 +224,7 @@ func FindAndAddVanityImportForDir(workingDir, absDir string, opts Options) (int,
 		}
 
 		dirName := f.Name()
-		if isUnexportedDir(dirName, opts.CheckInternal) {
+		if isUnexportedDir(dirName, opts.IncludeInternal) {
 			continue
 		}
 

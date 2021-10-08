@@ -21,9 +21,9 @@ func isGoTestFile(filename string) bool {
 }
 
 // isUnexportedDir checks if a dirname is a known unexported directory.
-// If checkInternal is false, we also ignore "internal".
-func isUnexportedDir(dirname string, checkInternal bool) bool {
-	return dirname == "testdata" || (!checkInternal && dirname == "internal")
+// If includeInternal is false, we also ignore "internal".
+func isUnexportedDir(dirname string, includeInternal bool) bool {
+	return dirname == "testdata" || (!includeInternal && dirname == "internal")
 }
 
 // writeContentToFile writes the content in bytes to a given file.
