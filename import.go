@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"errors"
 	"fmt"
+	"go/ast"
 	"go/parser"
 	"go/token"
 	"io/ioutil"
@@ -14,18 +15,45 @@ import (
 
 var (
 	errMainPackage = errors.New("failed to add import to a main package")
+	errGenerated   = errors.New("failed to add import to a generated file")
+	// Matches https://golang.org/s/generatedcode and cgo generated comment.
+	// Taken from https://github.com/golang/tools/blob/c5188f24a/refactor/rename/spec.go#L574-L576
+	generatedRx = regexp.MustCompile(`// .*DO NOT EDIT\.?`)
 )
+
+// isGeneratedFile reports whether ast.File is a generated file.
+// Taken from https://github.com/golang/tools/blob/c5188f24a/refactor/rename/spec.go#L578-L593
+func isGeneratedFile(pf *ast.File, tokenFile *token.File) bool {
+	// Iterate over the comments in the file
+	for _, commentGroup := range pf.Comments {
+		for _, comment := range commentGroup.List {
+			if matched := generatedRx.MatchString(comment.Text); matched {
+				// Check if comment is at the beginning of the line in source
+				if pos := tokenFile.Position(comment.Slash); pos.Column == 1 {
+					return true
+				}
+			}
+		}
+	}
+	return false
+}
 
 // addImportPath adds the vanity import path to a given go file.
 func addImportPath(absFilepath string, module string) (bool, []byte, error) {
 	fset := token.NewFileSet()
-	pf, err := parser.ParseFile(fset, absFilepath, nil, 0)
+	pf, err := parser.ParseFile(fset, absFilepath, nil, parser.ParseComments)
 	if err != nil {
 		return false, nil, fmt.Errorf("failed to parse the file %q: %v", absFilepath, err)
 	}
 	packageName := pf.Name.String()
 	if packageName == "main" { // you can't import a main package
 		return false, nil, errMainPackage
+	}
+
+	// Skip generated files.
+	tokenFile := fset.File(pf.Pos())
+	if isGeneratedFile(pf, tokenFile) {
+		return false, nil, errGenerated
 	}
 
 	content, err := ioutil.ReadFile(absFilepath)
