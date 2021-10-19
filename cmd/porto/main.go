@@ -12,6 +12,21 @@ import (
 	"github.com/jcchavezs/porto"
 )
 
+func getRegexpList(flagVal string) ([]*regexp.Regexp, error) {
+	var regexes []*regexp.Regexp
+	if len(flagVal) > 0 {
+		for _, sfrp := range strings.Split(flagVal, ",") {
+			sfr, err := regexp.Compile(sfrp)
+			if err != nil {
+				return nil, fmt.Errorf("failed to compile regex %q: %w", sfr, err)
+			}
+			regexes = append(regexes, sfr)
+		}
+	}
+
+	return regexes, nil
+}
+
 func main() {
 	flagWriteOutputToFile := flag.Bool("w", false, "write result to (source) file instead of stdout")
 	flagListDiff := flag.Bool("l", false, "list files whose vanity import differs from porto's")
@@ -48,15 +63,9 @@ Add import path to a folder
 		log.Fatalf("failed to resolve base absolute path for current working dir: %v", err)
 	}
 
-	var skipFilesRegex []*regexp.Regexp
-	if len(*flagSkipFiles) > 0 {
-		for _, sfrp := range strings.Split(*flagSkipFiles, ",") {
-			sfr, err := regexp.Compile(sfrp)
-			if err != nil {
-				log.Fatalf("failed to resolve base absolute path for %q: %v", baseDir, err)
-			}
-			skipFilesRegex = append(skipFilesRegex, sfr)
-		}
+	skipFilesRegex, err := getRegexpList(*flagSkipFiles)
+	if err != nil {
+		log.Fatalf("failed to build files regexes: %v", err)
 	}
 
 	diffCount, err := porto.FindAndAddVanityImportForDir(workingDir, baseAbsDir, porto.Options{
