@@ -6,8 +6,6 @@ import (
 	"log"
 	"os"
 	"path/filepath"
-	"regexp"
-	"strings"
 
 	"github.com/jcchavezs/porto"
 )
@@ -48,15 +46,9 @@ Add import path to a folder
 		log.Fatalf("failed to resolve base absolute path for current working dir: %v", err)
 	}
 
-	var skipFilesRegex []*regexp.Regexp
-	if len(*flagSkipFiles) > 0 {
-		for _, sfrp := range strings.Split(*flagSkipFiles, ",") {
-			sfr, err := regexp.Compile(sfrp)
-			if err != nil {
-				log.Fatalf("failed to resolve base absolute path for %q: %v", baseDir, err)
-			}
-			skipFilesRegex = append(skipFilesRegex, sfr)
-		}
+	skipFilesRegex, err := porto.GetRegexpList(*flagSkipFiles)
+	if err != nil {
+		log.Fatalf("failed to build files regexes: %v", err)
 	}
 
 	diffCount, err := porto.FindAndAddVanityImportForDir(workingDir, baseAbsDir, porto.Options{
