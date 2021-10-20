@@ -12,10 +12,10 @@ import (
 	"github.com/jcchavezs/porto"
 )
 
-func getRegexpList(flagVal string) ([]*regexp.Regexp, error) {
+func getRegexpList(regexps string) ([]*regexp.Regexp, error) {
 	var regexes []*regexp.Regexp
-	if len(flagVal) > 0 {
-		for _, sfrp := range strings.Split(flagVal, ",") {
+	if len(regexps) > 0 {
+		for _, sfrp := range strings.Split(regexps, ",") {
 			sfr, err := regexp.Compile(sfrp)
 			if err != nil {
 				return nil, fmt.Errorf("failed to compile regex %q: %w", sfr, err)
