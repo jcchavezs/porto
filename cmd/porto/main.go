@@ -6,26 +6,9 @@ import (
 	"log"
 	"os"
 	"path/filepath"
-	"regexp"
-	"strings"
 
 	"github.com/jcchavezs/porto"
 )
-
-func getRegexpList(regexps string) ([]*regexp.Regexp, error) {
-	var regexes []*regexp.Regexp
-	if len(regexps) > 0 {
-		for _, sfrp := range strings.Split(regexps, ",") {
-			sfr, err := regexp.Compile(sfrp)
-			if err != nil {
-				return nil, fmt.Errorf("failed to compile regex %q: %w", sfr, err)
-			}
-			regexes = append(regexes, sfr)
-		}
-	}
-
-	return regexes, nil
-}
 
 func main() {
 	flagWriteOutputToFile := flag.Bool("w", false, "write result to (source) file instead of stdout")
@@ -63,7 +46,7 @@ Add import path to a folder
 		log.Fatalf("failed to resolve base absolute path for current working dir: %v", err)
 	}
 
-	skipFilesRegex, err := getRegexpList(*flagSkipFiles)
+	skipFilesRegex, err := porto.GetRegexpList(*flagSkipFiles)
 	if err != nil {
 		log.Fatalf("failed to build files regexes: %v", err)
 	}
