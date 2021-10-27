@@ -74,10 +74,10 @@ func TestFindFilesWithVanityImport(t *testing.T) {
 
 }
 
-func TestIsIgnoredFile(t *testing.T) {
+func TestMatchesAny(t *testing.T) {
 	assert.True(
 		t,
-		isIgnoredFile(
+		matchesAny(
 			[]*regexp.Regexp{regexp.MustCompile(".*\\.pb\\.go$")},
 			"myfile.pb.go",
 		),
@@ -85,9 +85,17 @@ func TestIsIgnoredFile(t *testing.T) {
 
 	assert.False(
 		t,
-		isIgnoredFile(
+		matchesAny(
 			[]*regexp.Regexp{},
 			"myfile.pb.go",
+		),
+	)
+
+	assert.True(
+		t,
+		matchesAny(
+			[]*regexp.Regexp{regexp.MustCompile("^third_party$")},
+			"third_party",
 		),
 	)
 }
