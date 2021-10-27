@@ -106,7 +106,7 @@ func findAndAddVanityImportForModuleDir(workingDir, absDir string, moduleName st
 
 	gc := 0
 	for _, f := range files {
-		if isDir, dirName := f.IsDir(), f.Name(); isDir {
+		if isDir, dirName := f.IsDir(), f.Name(); isDir && !matchesAny(opts.SkipDirsRegexes, dirName) {
 			var (
 				c   int
 				err error
@@ -127,7 +127,7 @@ func findAndAddVanityImportForModuleDir(workingDir, absDir string, moduleName st
 			}
 
 			gc += c
-		} else if fileName := f.Name(); isGoFile(fileName) && !isGoTestFile(fileName) && !isIgnoredFile(opts.SkipFilesRegexes, fileName) {
+		} else if fileName := f.Name(); isGoFile(fileName) && !isGoTestFile(fileName) && !matchesAny(opts.SkipFilesRegexes, fileName) {
 			absFilepath := absDir + pathSeparator + fileName
 
 			hasChanged, newContent, err := addImportPath(absDir+pathSeparator+fileName, moduleName)
@@ -170,9 +170,9 @@ func findAndAddVanityImportForModuleDir(workingDir, absDir string, moduleName st
 	return gc, nil
 }
 
-func isIgnoredFile(fileRegexes []*regexp.Regexp, filename string) bool {
-	for _, fr := range fileRegexes {
-		if matched := fr.MatchString(filename); matched {
+func matchesAny(regexes []*regexp.Regexp, str string) bool {
+	for _, fr := range regexes {
+		if matched := fr.MatchString(str); matched {
 			return true
 		}
 	}
@@ -227,6 +227,8 @@ type Options struct {
 	ListDiffFiles bool
 	// Set of regex for matching files to be skipped
 	SkipFilesRegexes []*regexp.Regexp
+	// Set of regex for matching directories to be skipped
+	SkipDirsRegexes []*regexp.Regexp
 	// Include internal packages
 	IncludeInternal bool
 }

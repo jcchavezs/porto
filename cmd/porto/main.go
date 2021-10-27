@@ -14,6 +14,7 @@ func main() {
 	flagWriteOutputToFile := flag.Bool("w", false, "write result to (source) file instead of stdout")
 	flagListDiff := flag.Bool("l", false, "list files whose vanity import differs from porto's")
 	flagSkipFiles := flag.String("skip-files", "", "Regexps of files to skip")
+	flagSkipDirs := flag.String("skip-dirs", "", "Regexps of directories to skip")
 	flagIncludeInternal := flag.Bool("include-internal", false, "include internal folders")
 	flag.Parse()
 
@@ -26,6 +27,7 @@ Options:
 -w                  Write result to (source) file instead of stdout (default: false)
 -l                  List files whose vanity import differs from porto's (default: false)
 --skip-files        Regexps of files to skip
+--skip-dirs         Regexps of directories to skip
 --include-internal  Include internal folders
 
 Examples:
@@ -51,10 +53,16 @@ Add import path to a folder
 		log.Fatalf("failed to build files regexes: %v", err)
 	}
 
+	skipDirsRegex, err := porto.GetRegexpList(*flagSkipDirs)
+	if err != nil {
+		log.Fatalf("failed to build directories regexes: %v", err)
+	}
+
 	diffCount, err := porto.FindAndAddVanityImportForDir(workingDir, baseAbsDir, porto.Options{
 		WriteResultToFile: *flagWriteOutputToFile,
 		ListDiffFiles:     *flagListDiff,
 		SkipFilesRegexes:  skipFilesRegex,
+		SkipDirsRegexes:   skipDirsRegex,
 		IncludeInternal:   *flagIncludeInternal,
 	})
 	if err != nil {
