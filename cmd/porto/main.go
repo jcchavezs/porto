@@ -73,14 +73,20 @@ Add import path to a folder
 	}
 	skipDirsRegex = append(skipDirsRegex, userSkipDirsRegex...)
 
-	diffCount, err := porto.FindAndAddVanityImportForDir(workingDir, baseAbsDir, porto.Options{
-		WriteResultToFile:   *flagWriteOutputToFile,
-		ListDiffFiles:       *flagListDiff,
-		SkipFilesRegexes:    skipFilesRegex,
-		SkipDirsRegexes:     skipDirsRegex,
-		IncludeInternal:     *flagIncludeInternal,
-		IncludeFilesRegexes: includeFilesRegex,
-	})
+	opts := porto.Options{
+		WriteResultToFile: *flagWriteOutputToFile,
+		ListDiffFiles:     *flagListDiff,
+		IncludeInternal:   *flagIncludeInternal,
+	}
+
+	if len(includeFilesRegex) > 0 {
+		opts.IncludeFilesRegexes = includeFilesRegex
+	} else {
+		opts.SkipFilesRegexes = skipFilesRegex
+		opts.SkipDirsRegexes = skipDirsRegex
+	}
+
+	diffCount, err := porto.FindAndAddVanityImportForDir(workingDir, baseAbsDir, opts)
 	if err != nil {
 		log.Fatal(err)
 	}

@@ -127,7 +127,18 @@ func findAndAddVanityImportForModuleDir(workingDir, absDir string, moduleName st
 			}
 
 			gc += c
-		} else if fileName := f.Name(); isGoFile(fileName) && !isGoTestFile(fileName) && matchesAny(opts.IncludeFilesRegexes, fileName) && !matchesAny(opts.SkipFilesRegexes, fileName) {
+		} else if fileName := f.Name(); isGoFile(fileName) && !isGoTestFile(fileName) {
+			shouldEvaluate := true
+			if len(opts.IncludeFilesRegexes) > 0 {
+				shouldEvaluate = matchesAny(opts.IncludeFilesRegexes, fileName)
+			} else if len(opts.SkipFilesRegexes) > 0 {
+				shouldEvaluate = !matchesAny(opts.SkipFilesRegexes, fileName)
+			}
+
+			if !shouldEvaluate {
+				continue
+			}
+
 			absFilepath := absDir + pathSeparator + fileName
 
 			hasChanged, newContent, err := addImportPath(absDir+pathSeparator+fileName, moduleName)

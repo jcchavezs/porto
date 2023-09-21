@@ -72,6 +72,52 @@ func TestFindFilesWithVanityImport(t *testing.T) {
 		assert.Equal(t, 0, c)
 	})
 
+	t.Run("skip file", func(t *testing.T) {
+		c, err := findAndAddVanityImportForModuleDir(
+			cwd,
+			cwd+"/testdata/leftpad",
+			"github.com/jcchavezs/porto-integration-leftpad",
+			Options{
+				ListDiffFiles:    true,
+				SkipFilesRegexes: []*regexp.Regexp{regexp.MustCompile(`leftpad\.go`)},
+			},
+		)
+
+		require.NoError(t, err)
+		assert.Equal(t, 1, c)
+	})
+
+	t.Run("include file", func(t *testing.T) {
+		c, err := findAndAddVanityImportForModuleDir(
+			cwd,
+			cwd+"/testdata/leftpad",
+			"github.com/jcchavezs/porto-integration-leftpad",
+			Options{
+				ListDiffFiles:       true,
+				IncludeFilesRegexes: []*regexp.Regexp{regexp.MustCompile(`other\.go`)},
+			},
+		)
+
+		require.NoError(t, err)
+		assert.Equal(t, 1, c)
+	})
+
+	t.Run("skip and include file", func(t *testing.T) {
+		c, err := findAndAddVanityImportForModuleDir(
+			cwd,
+			cwd+"/testdata/leftpad",
+			"github.com/jcchavezs/porto-integration-leftpad",
+			Options{
+				ListDiffFiles:       true,
+				IncludeFilesRegexes: []*regexp.Regexp{regexp.MustCompile(`other\.go`)},
+				SkipFilesRegexes:    []*regexp.Regexp{regexp.MustCompile(`leftpad\.go`)},
+			},
+		)
+
+		require.NoError(t, err)
+		assert.Equal(t, 1, c)
+	})
+
 }
 
 func TestMatchesAny(t *testing.T) {
