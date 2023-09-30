@@ -93,8 +93,8 @@ func TestFindFilesWithVanityImport(t *testing.T) {
 			cwd+"/testdata/leftpad",
 			"github.com/jcchavezs/porto-integration-leftpad",
 			Options{
-				ListDiffFiles:       true,
-				IncludeFilesRegexes: []*regexp.Regexp{regexp.MustCompile(`other\.go`)},
+				ListDiffFiles:          true,
+				RestrictToFilesRegexes: []*regexp.Regexp{regexp.MustCompile(`other\.go`)},
 			},
 		)
 
@@ -108,9 +108,9 @@ func TestFindFilesWithVanityImport(t *testing.T) {
 			cwd+"/testdata/leftpad",
 			"github.com/jcchavezs/porto-integration-leftpad",
 			Options{
-				ListDiffFiles:       true,
-				IncludeFilesRegexes: []*regexp.Regexp{regexp.MustCompile(`other\.go`)},
-				SkipFilesRegexes:    []*regexp.Regexp{regexp.MustCompile(`leftpad\.go`)},
+				ListDiffFiles:          true,
+				RestrictToFilesRegexes: []*regexp.Regexp{regexp.MustCompile(`other\.go`)},
+				SkipFilesRegexes:       []*regexp.Regexp{regexp.MustCompile(`leftpad\.go`)},
 			},
 		)
 

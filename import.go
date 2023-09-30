@@ -129,8 +129,8 @@ func findAndAddVanityImportForModuleDir(workingDir, absDir string, moduleName st
 			gc += c
 		} else if fileName := f.Name(); isGoFile(fileName) && !isGoTestFile(fileName) {
 			shouldEvaluate := true
-			if len(opts.IncludeFilesRegexes) > 0 {
-				shouldEvaluate = matchesAny(opts.IncludeFilesRegexes, fileName)
+			if len(opts.RestrictToFilesRegexes) > 0 {
+				shouldEvaluate = matchesAny(opts.RestrictToFilesRegexes, fileName)
 			} else if len(opts.SkipFilesRegexes) > 0 {
 				shouldEvaluate = !matchesAny(opts.SkipFilesRegexes, fileName)
 			}
@@ -243,7 +243,7 @@ type Options struct {
 	// Include internal packages
 	IncludeInternal bool
 	// Set of regex for matching files to be included
-	IncludeFilesRegexes []*regexp.Regexp
+	RestrictToFilesRegexes []*regexp.Regexp
 }
 
 // FindAndAddVanityImportForDir scans all files in a folder and based on go.mod files
