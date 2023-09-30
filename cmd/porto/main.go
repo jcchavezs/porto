@@ -18,7 +18,7 @@ func main() {
 	flagSkipDirs := flag.String("skip-dirs", "", "Regexps of directories to skip")
 	flagSkipDefaultDirs := flag.Bool("skip-dirs-use-default", true, "Use default skip directory list")
 	flagIncludeInternal := flag.Bool("include-internal", false, "Include internal folders")
-	restrictToFiles := flag.String("restrict-to-files", "", "Regexps of files to restrict the inspection on. It takes precedence over -skip-files and -skip-dirs")
+	flagRestrictToFiles := flag.String("restrict-to-files", "", "Regexps of files to restrict the inspection on. It takes precedence over -skip-files and -skip-dirs")
 	flag.Parse()
 
 	baseDir := flag.Arg(0)
@@ -49,7 +49,7 @@ Add import path to a folder
 		log.Fatalf("failed to build files regexes to exclude: %v", err)
 	}
 
-	restrictToFilesRegex, err := porto.GetRegexpList(*restrictToFiles)
+	restrictToFilesRegex, err := porto.GetRegexpList(*flagRestrictToFiles)
 	if err != nil {
 		log.Fatalf("failed to build files regexes to include: %v", err)
 	}
