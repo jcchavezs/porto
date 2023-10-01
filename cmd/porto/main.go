@@ -18,7 +18,7 @@ func main() {
 	flagSkipDirs := flag.String("skip-dirs", "", "Regexps of directories to skip")
 	flagSkipDefaultDirs := flag.Bool("skip-dirs-use-default", true, "Use default skip directory list")
 	flagIncludeInternal := flag.Bool("include-internal", false, "Include internal folders")
-	flagRestrictToFiles := flag.String("restrict-to-files", "", "Regexps of files to restrict the inspection on. It takes precedence over -skip-files and -skip-dirs")
+	flagRestrictToFiles := flag.String("restrict-to-files", "", "Regexps of files to restrict the inspection on. It takes precedence over -skip-files")
 	flag.Parse()
 
 	baseDir := flag.Arg(0)
@@ -54,7 +54,7 @@ Add import path to a folder
 		log.Fatalf("failed to build files regexes to include: %v", err)
 	}
 
-	var skipDirsRegex []*regexp.Regexp
+	var skipDirsRegex = []*regexp.Regexp{}
 	if *flagSkipDefaultDirs {
 		skipDirsRegex = append(skipDirsRegex, porto.StdExcludeDirRegexps...)
 	}
@@ -68,13 +68,13 @@ Add import path to a folder
 		WriteResultToFile: *flagWriteOutputToFile,
 		ListDiffFiles:     *flagListDiff,
 		IncludeInternal:   *flagIncludeInternal,
+		SkipDirsRegexes:   skipDirsRegex,
 	}
 
 	if len(restrictToFilesRegex) > 0 {
 		opts.RestrictToFilesRegexes = restrictToFilesRegex
 	} else {
 		opts.SkipFilesRegexes = skipFilesRegex
-		opts.SkipDirsRegexes = skipDirsRegex
 	}
 
 	diffCount, err := porto.FindAndAddVanityImportForDir(workingDir, baseAbsDir, opts)
