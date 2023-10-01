@@ -7,7 +7,7 @@ import (
 	"go/ast"
 	"go/parser"
 	"go/token"
-	"io/ioutil"
+	"os"
 	"path/filepath"
 	"regexp"
 	"strings"
@@ -56,7 +56,7 @@ func addImportPath(absFilepath string, module string) (bool, []byte, error) {
 		return false, nil, errGenerated
 	}
 
-	content, err := ioutil.ReadFile(absFilepath)
+	content, err := os.ReadFile(absFilepath)
 	if err != nil {
 		return false, nil, fmt.Errorf("failed to parse the file %q: %v", absFilepath, err)
 	}
@@ -99,7 +99,7 @@ func findAndAddVanityImportForModuleDir(workingDir, absDir string, moduleName st
 		return 0, nil
 	}
 
-	files, err := ioutil.ReadDir(absDir)
+	files, err := os.ReadDir(absDir)
 	if err != nil {
 		return 0, fmt.Errorf("failed to read the content of %q: %v", absDir, err)
 	}
@@ -127,7 +127,18 @@ func findAndAddVanityImportForModuleDir(workingDir, absDir string, moduleName st
 			}
 
 			gc += c
-		} else if fileName := f.Name(); isGoFile(fileName) && !isGoTestFile(fileName) && !matchesAny(opts.SkipFilesRegexes, fileName) {
+		} else if fileName := f.Name(); isGoFile(fileName) && !isGoTestFile(fileName) {
+			shouldEvaluate := true
+			if len(opts.RestrictToFilesRegexes) > 0 {
+				shouldEvaluate = matchesAny(opts.RestrictToFilesRegexes, fileName)
+			} else if len(opts.SkipFilesRegexes) > 0 {
+				shouldEvaluate = !matchesAny(opts.SkipFilesRegexes, fileName)
+			}
+
+			if !shouldEvaluate {
+				continue
+			}
+
 			absFilepath := absDir + pathSeparator + fileName
 
 			hasChanged, newContent, err := addImportPath(absDir+pathSeparator+fileName, moduleName)
@@ -181,7 +192,7 @@ func matchesAny(regexes []*regexp.Regexp, str string) bool {
 }
 
 func findAndAddVanityImportForNonModuleDir(workingDir, absDir string, opts Options) (int, error) {
-	files, err := ioutil.ReadDir(absDir)
+	files, err := os.ReadDir(absDir)
 	if err != nil {
 		return 0, fmt.Errorf("failed to read %q: %v", absDir, err)
 	}
@@ -231,6 +242,8 @@ type Options struct {
 	SkipDirsRegexes []*regexp.Regexp
 	// Include internal packages
 	IncludeInternal bool
+	// Set of regex for matching files to be included
+	RestrictToFilesRegexes []*regexp.Regexp
 }
 
 // FindAndAddVanityImportForDir scans all files in a folder and based on go.mod files
@@ -240,7 +253,7 @@ func FindAndAddVanityImportForDir(workingDir, absDir string, opts Options) (int,
 		return findAndAddVanityImportForModuleDir(workingDir, absDir, moduleName, opts)
 	}
 
-	files, err := ioutil.ReadDir(absDir)
+	files, err := os.ReadDir(absDir)
 	if err != nil {
 		return 0, fmt.Errorf("failed to read the content of %q: %v", absDir, err)
 	}

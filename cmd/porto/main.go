@@ -12,27 +12,20 @@ import (
 )
 
 func main() {
-	flagWriteOutputToFile := flag.Bool("w", false, "write result to (source) file instead of stdout")
-	flagListDiff := flag.Bool("l", false, "list files whose vanity import differs from porto's")
+	flagWriteOutputToFile := flag.Bool("w", false, "Write result to (source) file instead of stdout")
+	flagListDiff := flag.Bool("l", false, "List files whose vanity import differs from porto's")
 	flagSkipFiles := flag.String("skip-files", "", "Regexps of files to skip")
 	flagSkipDirs := flag.String("skip-dirs", "", "Regexps of directories to skip")
-	flagSkipDefaultDirs := flag.Bool("skip-dirs-use-default", true, "use default skip directory list")
-	flagIncludeInternal := flag.Bool("include-internal", false, "include internal folders")
+	flagSkipDefaultDirs := flag.Bool("skip-dirs-use-default", true, "Use default skip directory list")
+	flagIncludeInternal := flag.Bool("include-internal", false, "Include internal folders")
+	flagRestrictToFiles := flag.String("restrict-to-files", "", "Regexps of files to restrict the inspection on. It takes precedence over -skip-files and -skip-dirs")
 	flag.Parse()
 
 	baseDir := flag.Arg(0)
+
 	if len(flag.Args()) == 0 {
+		flag.Usage()
 		fmt.Println(`
-usage: porto [options] <target-path>
-
-Options:
--w                       Write result to (source) file instead of stdout (default: false)
--l                       List files whose vanity import differs from porto's (default: false)
---skip-files             Regexps of files to skip
---skip-dirs              Regexps of directories to skip
---skip-dirs-use-default  Use default skip directory list (default: true)
---include-internal       Include internal folders
-
 Examples:
 
 Add import path to a folder
@@ -53,7 +46,12 @@ Add import path to a folder
 
 	skipFilesRegex, err := porto.GetRegexpList(*flagSkipFiles)
 	if err != nil {
-		log.Fatalf("failed to build files regexes: %v", err)
+		log.Fatalf("failed to build files regexes to exclude: %v", err)
+	}
+
+	restrictToFilesRegex, err := porto.GetRegexpList(*flagRestrictToFiles)
+	if err != nil {
+		log.Fatalf("failed to build files regexes to include: %v", err)
 	}
 
 	var skipDirsRegex []*regexp.Regexp
@@ -66,13 +64,20 @@ Add import path to a folder
 	}
 	skipDirsRegex = append(skipDirsRegex, userSkipDirsRegex...)
 
-	diffCount, err := porto.FindAndAddVanityImportForDir(workingDir, baseAbsDir, porto.Options{
+	opts := porto.Options{
 		WriteResultToFile: *flagWriteOutputToFile,
 		ListDiffFiles:     *flagListDiff,
-		SkipFilesRegexes:  skipFilesRegex,
-		SkipDirsRegexes:   skipDirsRegex,
 		IncludeInternal:   *flagIncludeInternal,
-	})
+	}
+
+	if len(restrictToFilesRegex) > 0 {
+		opts.RestrictToFilesRegexes = restrictToFilesRegex
+	} else {
+		opts.SkipFilesRegexes = skipFilesRegex
+		opts.SkipDirsRegexes = skipDirsRegex
+	}
+
+	diffCount, err := porto.FindAndAddVanityImportForDir(workingDir, baseAbsDir, opts)
 	if err != nil {
 		log.Fatal(err)
 	}
