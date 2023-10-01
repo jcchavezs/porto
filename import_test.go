@@ -87,14 +87,33 @@ func TestFindFilesWithVanityImport(t *testing.T) {
 		assert.Equal(t, 1, c)
 	})
 
-	t.Run("include file", func(t *testing.T) {
+	t.Run("skip dir", func(t *testing.T) {
+		c, err := findAndAddVanityImportForModuleDir(
+			cwd,
+			cwd+"/testdata",
+			"github.com/jcchavezs/porto/integration",
+			Options{
+				ListDiffFiles: true,
+				SkipDirsRegexes: []*regexp.Regexp{
+					regexp.MustCompile(`^codegen$`),
+					regexp.MustCompile(`^leftpad$`),
+					regexp.MustCompile(`^rightpad$`),
+				},
+			},
+		)
+
+		require.NoError(t, err)
+		assert.Equal(t, 1, c)
+	})
+
+	t.Run("restrict to files", func(t *testing.T) {
 		c, err := findAndAddVanityImportForModuleDir(
 			cwd,
 			cwd+"/testdata/leftpad",
 			"github.com/jcchavezs/porto-integration-leftpad",
 			Options{
 				ListDiffFiles:          true,
-				RestrictToFilesRegexes: []*regexp.Regexp{regexp.MustCompile(`other\.go`)},
+				RestrictToFilesRegexes: []*regexp.Regexp{regexp.MustCompile(`^other\.go$`)},
 			},
 		)
 

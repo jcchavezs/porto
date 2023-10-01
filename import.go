@@ -106,7 +106,11 @@ func findAndAddVanityImportForModuleDir(workingDir, absDir string, moduleName st
 
 	gc := 0
 	for _, f := range files {
-		if isDir, dirName := f.IsDir(), f.Name(); isDir && !matchesAny(opts.SkipDirsRegexes, dirName) {
+		if isDir, dirName := f.IsDir(), f.Name(); isDir {
+			if matchesAny(opts.SkipDirsRegexes, dirName) {
+				continue
+			}
+
 			var (
 				c   int
 				err error
