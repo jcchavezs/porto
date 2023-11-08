@@ -48,6 +48,7 @@ func TestFindFilesWithVanityImport(t *testing.T) {
 		c, err := findAndAddVanityImportForModuleDir(
 			cwd,
 			cwd+"/testdata/leftpad",
+			cwd+"/testdata/leftpad",
 			"github.com/jcchavezs/porto-integration-leftpad",
 			Options{
 				ListDiffFiles: true,
@@ -62,6 +63,7 @@ func TestFindFilesWithVanityImport(t *testing.T) {
 		c, err := findAndAddVanityImportForModuleDir(
 			cwd,
 			cwd+"/testdata/nopad",
+			cwd+"/testdata/nopad",
 			"github.com/jcchavezs/porto-integration/nopad",
 			Options{
 				ListDiffFiles: true,
@@ -75,6 +77,7 @@ func TestFindFilesWithVanityImport(t *testing.T) {
 	t.Run("skip file", func(t *testing.T) {
 		c, err := findAndAddVanityImportForModuleDir(
 			cwd,
+			cwd+"/testdata/leftpad",
 			cwd+"/testdata/leftpad",
 			"github.com/jcchavezs/porto-integration-leftpad",
 			Options{
@@ -91,6 +94,7 @@ func TestFindFilesWithVanityImport(t *testing.T) {
 		c, err := findAndAddVanityImportForModuleDir(
 			cwd,
 			cwd+"/testdata",
+			cwd+"/testdata",
 			"github.com/jcchavezs/porto/integration",
 			Options{
 				ListDiffFiles: true,
@@ -103,12 +107,13 @@ func TestFindFilesWithVanityImport(t *testing.T) {
 		)
 
 		require.NoError(t, err)
-		assert.Equal(t, 1, c)
+		assert.Equal(t, 2, c)
 	})
 
 	t.Run("restrict to files", func(t *testing.T) {
 		c, err := findAndAddVanityImportForModuleDir(
 			cwd,
+			cwd+"/testdata/leftpad",
 			cwd+"/testdata/leftpad",
 			"github.com/jcchavezs/porto-integration-leftpad",
 			Options{
@@ -121,9 +126,26 @@ func TestFindFilesWithVanityImport(t *testing.T) {
 		assert.Equal(t, 1, c)
 	})
 
+	t.Run("restrict to dir", func(t *testing.T) {
+		c, err := findAndAddVanityImportForModuleDir(
+			cwd,
+			cwd+"/testdata",
+			cwd+"/testdata",
+			"github.com/jcchavezs/porto/integration",
+			Options{
+				ListDiffFiles:         true,
+				RestrictToDirsRegexes: []*regexp.Regexp{regexp.MustCompile(`^withoutgomod`)},
+			},
+		)
+
+		require.NoError(t, err)
+		assert.Equal(t, 2, c)
+	})
+
 	t.Run("skip and include file", func(t *testing.T) {
 		c, err := findAndAddVanityImportForModuleDir(
 			cwd,
+			cwd+"/testdata/leftpad",
 			cwd+"/testdata/leftpad",
 			"github.com/jcchavezs/porto-integration-leftpad",
 			Options{
