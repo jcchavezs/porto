@@ -142,14 +142,7 @@ func findAndAddVanityImportForModuleDir(workingDir, baseAbsDir, absDir string, m
 
 			gc += c
 		} else if fileName := f.Name(); isGoFile(fileName) && !isGoTestFile(fileName) {
-			shouldEvaluate := true
-			if len(opts.RestrictToFilesRegexes) > 0 {
-				shouldEvaluate = matchesAny(opts.RestrictToFilesRegexes, fileName)
-			} else if len(opts.SkipFilesRegexes) > 0 {
-				shouldEvaluate = !matchesAny(opts.SkipFilesRegexes, fileName)
-			}
-
-			if !shouldEvaluate {
+			if !shouldEvaluate(opts, fileName) {
 				continue
 			}
 
@@ -162,30 +155,11 @@ func findAndAddVanityImportForModuleDir(workingDir, baseAbsDir, absDir string, m
 
 			switch err {
 			case nil:
-				if opts.WriteResultToFile {
-					err = writeContentToFile(absFilepath, newContent)
-					if err != nil {
-						return 0, fmt.Errorf("failed to write file: %v", err)
-					}
-					gc++
-				} else if opts.ListDiffFiles {
-					relFilepath, err := filepath.Rel(workingDir, absFilepath)
-					if err != nil {
-						return 0, fmt.Errorf("failed to resolve relative path: %v", err)
-					}
-					// TODO(jcchavezs): make this pluggable to allow different output formats
-					// and test assertions.
-					fmt.Printf("%s: missing right vanity import\n", relFilepath)
-					gc++
-				} else {
-					relFilepath, err := filepath.Rel(workingDir, absFilepath)
-					if err != nil {
-						return 0, fmt.Errorf("failed to resolve relative path: %v", err)
-					}
-					fmt.Printf("👉 %s\n\n", relFilepath)
-					fmt.Println(string(newContent))
-					gc++
+				err = handleNilErrorCase(opts, absFilepath, newContent, workingDir)
+				if err != nil {
+					return 0, err
 				}
+				gc++
 			case errMainPackage:
 				continue
 			default:
@@ -195,6 +169,42 @@ func findAndAddVanityImportForModuleDir(workingDir, baseAbsDir, absDir string, m
 	}
 
 	return gc, nil
+}
+
+func shouldEvaluate(opts Options, fileName string) bool {
+	shouldEvaluate := true
+	if len(opts.RestrictToFilesRegexes) > 0 {
+		shouldEvaluate = matchesAny(opts.RestrictToFilesRegexes, fileName)
+	} else if len(opts.SkipFilesRegexes) > 0 {
+		shouldEvaluate = !matchesAny(opts.SkipFilesRegexes, fileName)
+	}
+
+	return shouldEvaluate
+}
+
+func handleNilErrorCase(opts Options, absFilepath string, newContent []byte, workingDir string) error {
+	if opts.WriteResultToFile {
+		err := writeContentToFile(absFilepath, newContent)
+		if err != nil {
+			return fmt.Errorf("failed to write file: %v", err)
+		}
+	} else if opts.ListDiffFiles {
+		relFilepath, err := filepath.Rel(workingDir, absFilepath)
+		if err != nil {
+			return fmt.Errorf("failed to resolve relative path: %v", err)
+		}
+		// TODO(jcchavezs): make this pluggable to allow different output formats
+		// and test assertions.
+		fmt.Printf("%s: missing right vanity import\n", relFilepath)
+	} else {
+		relFilepath, err := filepath.Rel(workingDir, absFilepath)
+		if err != nil {
+			return fmt.Errorf("failed to resolve relative path: %v", err)
+		}
+		fmt.Printf("👉 %s\n\n", relFilepath)
+		fmt.Println(string(newContent))
+	}
+	return nil
 }
 
 func matchesAny(regexes []*regexp.Regexp, str string) bool {
