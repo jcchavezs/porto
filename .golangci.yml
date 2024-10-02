@@ -1,5 +1,5 @@
 run:
-  deadline: 5m
+  timeout: 5m
 
 linters:
   disable-all: true
@@ -14,9 +14,9 @@ linters:
     - lll
     - misspell
     - nakedret
-    - structcheck
+    # Replaces structcheck and varcheck.
+    - unused
     - unparam
-    - varcheck
 
 linters-settings:
   dupl:
