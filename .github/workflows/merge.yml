@@ -35,7 +35,6 @@ jobs:
         with:
           # Required: the version of golangci-lint is required and must be specified without patch version: we always use the latest patch version.
           version: v1.61.0
-          skip-go-installation: true
 
       - name: Run tests
         run: go test ./...
