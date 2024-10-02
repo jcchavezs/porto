@@ -13,16 +13,16 @@ jobs:
     runs-on: ubuntu-20.04
     strategy:
       matrix:
-        go: ["1.19", "1.20", "1.21"]
+        go: ["1.21", "1.22", "1.23"]
     steps:
       # Set fetch-depth: 0 to fetch commit history and tags for use in version calculation
       - name: Check out code
-        uses: actions/checkout@v2.3.4
+        uses: actions/checkout@v4
         with:
           fetch-depth: 0
 
       - name: Setup go
-        uses: actions/setup-go@v1
+        uses: actions/setup-go@v5
         with:
           go-version: ${{ matrix.go }}
 
@@ -31,10 +31,10 @@ jobs:
           go get ./...
 
       - name: Lint files
-        uses: golangci/golangci-lint-action@v2
+        uses: golangci/golangci-lint-action@v6.1.0
         with:
           # Required: the version of golangci-lint is required and must be specified without patch version: we always use the latest patch version.
-          version: v1.42
+          version: v1.61.0
           skip-go-installation: true
 
       - name: Run tests
