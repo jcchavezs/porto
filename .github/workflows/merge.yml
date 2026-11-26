@@ -17,12 +17,12 @@ jobs:
     steps:
       # Set fetch-depth: 0 to fetch commit history and tags for use in version calculation
       - name: Check out code
-        uses: actions/checkout@v4
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
         with:
           fetch-depth: 0
 
       - name: Setup go
-        uses: actions/setup-go@v5
+        uses: actions/setup-go@40f1582b2485089dde7abd97c1529aa768e1baff # v5.6.0
         with:
           go-version: ${{ matrix.go }}
 
@@ -31,7 +31,7 @@ jobs:
           go get ./...
 
       - name: Lint files
-        uses: golangci/golangci-lint-action@v6.1.0
+        uses: golangci/golangci-lint-action@aaa42aa0628b4ae2578232a66b541047968fac86 # v6.1.0
         with:
           # Required: the version of golangci-lint is required and must be specified without patch version: we always use the latest patch version.
           version: v1.61.0
